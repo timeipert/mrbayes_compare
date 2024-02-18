@@ -1,7 +1,7 @@
 /*
  *  MrBayes 3
  *
- *  (c) 2002-2023
+ *  (c) 2002-2013
  *
  *  This file originally contributed by:
  *
@@ -38,7 +38,11 @@
 // #define DEBUG_MB_BEAGLE_MULTIPART
 // #define DEBUG_MB_BEAGLE_MULTIPART_SITELNL
 
+const char* const svnRevisionMbbeagleC = "$Rev$";   /* Revision keyword which is expended/updated by svn on each commit/update */
+
 /* Functions and variables defined in mcmc.c that are not exported in mcmc.h */
+void    LaunchLogLikeForDivision(int chain, int d, MrBFlt* lnL);
+
 void    FlipCondLikeSpace (ModelInfo *m, int chain, int nodeIndex);
 void    FlipNodeScalerSpace (ModelInfo *m, int chain, int nodeIndex);
 void    FlipSiteScalerSpace (ModelInfo *m, int chain);
@@ -481,8 +485,8 @@ void LaunchBEAGLELogLikeForDivision(int chain, int d, ModelInfo* m, Tree* tree, 
                         if (m->successCount[chain] < 2)
                             {
                             rescaleFreqNew -= rescaleFreqNew >> 3;
-                            /* to avoid situation when we may stack at high rescaleFreq when new states do not get accepted because of low likelihood but there proposed frequency is high we reduce rescaleFreq even if we reject the last move*/
-                            /* basically the higher probability of proposing of low likelihood state which needs smaller rescaleFreq would lead to higher probability of hitting this code which should reduce rescaleFreqOld thus reduce further probability of hitting this code */
+                            /* to avoid situation when we may stack at high rescaleFreq when new states do not get accepted because of low liklihood but there proposed frequency is high we reduce rescaleFreq even if we reject the last move*/
+                            /* basically the higher probability of proposing of low liklihood state which needs smaller rescaleFreq would lead to higher probability of hitting this code which should reduce rescaleFreqOld thus reduce further probability of hitting this code */
                             /* at some point this negative feedback mechanism should get in balance with the mechanism of periodically increasing rescaleFreq when long sequence of successes is achieved*/
                             m->rescaleFreqOld -= m->rescaleFreqOld >> 3;
                             }
@@ -538,7 +542,7 @@ void LaunchBEAGLELogLikeForDivision(int chain, int d, ModelInfo* m, Tree* tree, 
 }
 
 
-void recalculateScalers (int chain)
+void recalculateScalers(int chain)
 {
     int         i, d, rescaleFreqNew;
     int         *isScalerNode;
@@ -606,7 +610,7 @@ void recalculateScalers (int chain)
 }
 
 
-void BeagleAddGPUDevicesToList (int **newResourceList, int *beagleResourceCount)
+void BeagleAddGPUDevicesToList(int **newResourceList, int *beagleResourceCount)
 {
     BeagleResourceList* beagleResources;
     int i, gpuCount;
@@ -626,7 +630,7 @@ void BeagleAddGPUDevicesToList (int **newResourceList, int *beagleResourceCount)
 }
 
 
-void BeagleRemoveGPUDevicesFromList (int **beagleResource, int *beagleResourceCount)
+void BeagleRemoveGPUDevicesFromList(int **beagleResource, int *beagleResourceCount)
 {
     *beagleResourceCount = 0;
 }
@@ -637,7 +641,7 @@ void BeagleRemoveGPUDevicesFromList (int **beagleResource, int *beagleResourceCo
 | BeaglePrintResources: outputs the available BEAGLE resources
 |
 ----------*/
-void BeaglePrintResources (void)
+void BeaglePrintResources()
 {
     int i;
     BeagleResourceList* beagleResources;
@@ -660,7 +664,7 @@ void BeaglePrintResources (void)
 }
 
 
-int BeagleCheckFlagCompatability (long inFlags)
+int BeagleCheckFlagCompatability(long inFlags)
 {
     if (inFlags & BEAGLE_FLAG_PROCESSOR_GPU) {
         if (inFlags & BEAGLE_FLAG_VECTOR_SSE) {
@@ -682,7 +686,7 @@ int BeagleCheckFlagCompatability (long inFlags)
 |  BeaglePrintFlags: outputs beagle instance details
 |
 ______________________*/
-void BeaglePrintFlags (long inFlags)
+void BeaglePrintFlags(long inFlags) 
 {
     int     i, k;
     char *names[] = { "PROCESSOR_CPU",
@@ -752,7 +756,7 @@ void BeaglePrintFlags (long inFlags)
         }
 }
 
-int ScheduleLogLikeForAllDivisions (void)
+int ScheduleLogLikeForAllDivisions()
 {
     int d;
     int divisionsToLaunch = 0;
@@ -777,7 +781,7 @@ int ScheduleLogLikeForAllDivisions (void)
  |
  |  TreeCondLikes_Beagle: This routine updates all conditional
  |       (partial) likelihoods of a beagle instance while doing no rescaling.
- |      That potentially can make final likelihood bad then calculation with rescaling needs to be done.
+ |      That potentialy can make final liklihood bad then calculation with rescaling needs to be done.
  |
  -----------------------------------------------------------------*/
 int TreeCondLikes_Beagle_No_Rescale (Tree *t, int division, int chain)
@@ -820,7 +824,7 @@ int TreeCondLikes_Beagle_No_Rescale (Tree *t, int division, int chain)
             m->operations[op].child2Partials         = m->condLikeIndex[chain][p->right->index];
             m->operations[op].child2TransitionMatrix = m->tiProbsIndex [chain][p->right->index];
             
-            /* All partials for tips are the same across omega categories, thus we are doing the following two if statements.*/
+            /* All partials for tips are the same across omega categories, thus we are doing the following two if statments.*/
             if (p->left->left== NULL)
                 chil1Step=0;
             else
@@ -922,7 +926,7 @@ int TreeCondLikes_Beagle_Rescale_All (Tree *t, int division, int chain)
         m->operations[op].child2Partials         = m->condLikeIndex[chain][p->right->index];
         m->operations[op].child2TransitionMatrix = m->tiProbsIndex [chain][p->right->index];
         
-        /* All partials for tips are the same across omega categories, thus we are doing the following two if statements.*/
+        /* All partials for tips are the same across omega catigoris, thus we are doing the following two if statments.*/
         if (p->left->left== NULL)
             chil1Step=0;
         else
@@ -1045,7 +1049,7 @@ int TreeCondLikes_Beagle_Always_Rescale (Tree *t, int division, int chain)
             m->operations[op].child2Partials         = m->condLikeIndex[chain][p->right->index];
             m->operations[op].child2TransitionMatrix = m->tiProbsIndex [chain][p->right->index];
 
-            /* All partials for tips are the same across omega categories, thus we are doing the following two if statements.*/
+            /* All partials for tips are the same across omega catigoris, thus we are doing the following two if statments.*/
             if (p->left->left== NULL && p->left->right== NULL)
                 chil1Step=0;
             else
@@ -1108,12 +1112,12 @@ int TreeCondLikes_Beagle_Always_Rescale (Tree *t, int division, int chain)
 }
 
 
-/*---------------------------------------------------------------------------
+/**---------------------------------------------------------------------------
 |
 |   TreeLikelihood_Beagle: Accumulate the log likelihoods calculated by Beagle
 |      at the root.
 |
------------------------------------------------------------------------------*/
+---------------------------------------- -------------------------------------*/
 int TreeLikelihood_Beagle (Tree *t, int division, int chain, MrBFlt *lnL, int whichSitePats)
 {
     int         i, j, c = 0, nStates, hasPInvar, beagleReturn;
@@ -1428,14 +1432,6 @@ int TreeTiProbs_Beagle (Tree *t, int division, int chain)
                 {
                 length = GetParamSubVals (m->tk02BranchRates, chain, state[chain])[p->index];
                 }
-            else if (m->wnBranchRates != NULL)
-                {
-                length = GetParamSubVals (m->wnBranchRates, chain, state[chain])[p->index];
-                }
-            else if (m->ilnBranchRates != NULL)
-                {
-                length = GetParamSubVals (m->ilnBranchRates, chain, state[chain])[p->index];
-                }
             else if (m->igrBranchRates != NULL)
                 {
                 length = GetParamSubVals (m->igrBranchRates, chain, state[chain])[p->index];
@@ -1497,7 +1493,7 @@ int TreeTiProbs_Beagle (Tree *t, int division, int chain)
 |   InitBeagleMultiPartitionInstance: create and initialize a beagle instance for multiple partitions
 |
 -------------------------------------------------------------------------*/
-int InitBeagleMultiPartitionInstance (void)
+int InitBeagleMultiPartitionInstance ()
 {
     int                     i, j, k, c, s, d, *inStates, numPartAmbigTips, sizePD;
     int                     nCijkParts, numRateCats, numModelStates, numCondLikes, numScalers;
@@ -1628,14 +1624,6 @@ int InitBeagleMultiPartitionInstance (void)
     if (beagleInstance < 0)
         return ERROR;
 
-    /* allocate space for tip data */
-    inStates = (int *) SafeMalloc (numChars * sizeof(int));
-    if (!inStates)
-        return ERROR;
-    inPartials = (double *) SafeMalloc (numChars * numModelStates * sizeof(double));
-    if (!inPartials)
-        return ERROR;
-
     for (d=0; d<numCurrentDivisions; d++)
         {
         m = &modelSettings[d];
@@ -1644,6 +1632,12 @@ int InitBeagleMultiPartitionInstance (void)
         }
 
     /* initialize tip data */
+    inStates = (int *) SafeMalloc (numChars * sizeof(int));
+    if (!inStates)
+        return ERROR;
+    inPartials = (double *) SafeMalloc (numChars * numModelStates * sizeof(double));
+    if (!inPartials)
+        return ERROR;
     for (i=0; i<numLocalTaxa; i++)
         {
         if (anyDivPartAmbigTip[i] == NO)
@@ -1852,8 +1846,8 @@ void LaunchBEAGLELogLikeMultiPartition(int* divisions, int divisionCount, int ch
                                     if (m->successCount[chain] < 2)
                                         {
                                         m->rescaleFreqNew -= m->rescaleFreqNew >> 3;
-                                        /* to avoid situation when we may stack at high rescaleFreq when new states do not get accepted because of low likelihood but there proposed frequency is high we reduce rescaleFreq even if we reject the last move*/
-                                        /* basically the higher probability of proposing of low likelihood state which needs smaller rescaleFreq would lead to higher probability of hitting this code which should reduce rescaleFreqOld thus reduce further probability of hitting this code */
+                                        /* to avoid situation when we may stack at high rescaleFreq when new states do not get accepted because of low liklihood but there proposed frequency is high we reduce rescaleFreq even if we reject the last move*/
+                                        /* basically the higher probability of proposing of low liklihood state which needs smaller rescaleFreq would lead to higher probability of hitting this code which should reduce rescaleFreqOld thus reduce further probability of hitting this code */
                                         /* at some point this negative feedback mechanism should get in balance with the mechanism of periodically increasing rescaleFreq when long sequence of successes is achieved*/
                                         m->rescaleFreqOld -= m->rescaleFreqOld >> 3;
                                         }
@@ -2076,14 +2070,6 @@ int TreeTiProbs_BeagleMultiPartition (int* divisions, int divisionCount, int cha
                     {
                     length = GetParamSubVals (m->tk02BranchRates, chain, state[chain])[p->index];
                     }
-                else if (m->wnBranchRates != NULL)
-                    {
-                    length = GetParamSubVals (m->wnBranchRates, chain, state[chain])[p->index];
-                    }
-                else if (m->ilnBranchRates != NULL)
-                    {
-                    length = GetParamSubVals (m->ilnBranchRates, chain, state[chain])[p->index];
-                    }
                 else if (m->igrBranchRates != NULL)
                     {
                     length = GetParamSubVals (m->igrBranchRates, chain, state[chain])[p->index];
@@ -2157,7 +2143,7 @@ int TreeTiProbs_BeagleMultiPartition (int* divisions, int divisionCount, int cha
  |
  |  TreeCondLikes_Beagle: This routine updates all conditional
  |       (partial) likelihoods of a beagle instance across all divisions while doing no rescaling.
- |      That potentially can make final likelihood bad then calculation with rescaling needs to be done.
+ |      That potentialy can make final liklihood bad then calculation with rescaling needs to be done.
  |
  -----------------------------------------------------------------*/
 int TreeCondLikes_BeagleMultiPartition_No_Rescale (int* divisions, int divisionCount, int chain)
@@ -2211,7 +2197,7 @@ int TreeCondLikes_BeagleMultiPartition_No_Rescale (int* divisions, int divisionC
                 m->operationsByPartition[m->opCount].child2Partials         = m->condLikeIndex[chain][p->right->index];
                 m->operationsByPartition[m->opCount].child2TransitionMatrix = m->tiProbsIndex [chain][p->right->index] + divisionOffset;
                 
-                /* All partials for tips are the same across omega categories, thus we are doing the following two if statements.*/
+                /* All partials for tips are the same across omega categories, thus we are doing the following two if statments.*/
                 if (p->left->left== NULL)
                     chil1Step=0;
                 else
@@ -2301,7 +2287,7 @@ int TreeCondLikes_BeagleMultiPartition_No_Rescale (int* divisions, int divisionC
  |
  |  TreeCondLikes_Beagle: This routine updates all conditional
  |       (partial) likelihoods of a beagle instance across all divisions while rescaling at every node.
- |        Note: all nodes get recalculated, not only touched by move.
+ |        Note: all nodes get recalculated, not only tached by move.
  |
  -----------------------------------------------------------------*/
 int TreeCondLikes_BeagleMultiPartition_Rescale_All (int* divisions, int divisionCount, int chain)
@@ -2358,7 +2344,7 @@ int TreeCondLikes_BeagleMultiPartition_Rescale_All (int* divisions, int division
             m->operationsByPartition[m->opCount].child2Partials         = m->condLikeIndex[chain][p->right->index];
             m->operationsByPartition[m->opCount].child2TransitionMatrix = m->tiProbsIndex [chain][p->right->index] + divisionOffset;
             
-            /* All partials for tips are the same across omega categories, thus we are doing the following two if statements.*/
+            /* All partials for tips are the same across omega catigoris, thus we are doing the following two if statments.*/
             if (p->left->left== NULL)
                 chil1Step=0;
             else
@@ -2519,7 +2505,7 @@ int TreeCondLikes_BeagleMultiPartition_Always_Rescale (int* divisions, int divis
                 m->operationsByPartition[m->opCount].child2Partials         = m->condLikeIndex[chain][p->right->index];
                 m->operationsByPartition[m->opCount].child2TransitionMatrix = m->tiProbsIndex [chain][p->right->index] + divisionOffset;
 
-                /* All partials for tips are the same across omega categories, thus we are doing the following two if statements.*/
+                /* All partials for tips are the same across omega catigoris, thus we are doing the following two if statments.*/
                 if (p->left->left== NULL && p->left->right== NULL)
                     chil1Step=0;
                 else
@@ -2621,12 +2607,12 @@ int TreeCondLikes_BeagleMultiPartition_Always_Rescale (int* divisions, int divis
     return NO_ERROR;
 }
 
-/*---------------------------------------------------------------------------
+/**---------------------------------------------------------------------------
 |
 |   TreeLikelihood_BeagleMultiPartition: Accumulate the log likelihoods calculated by Beagle
 |      at the root across all divisions.
 |
------------------------------------------------------------------------------*/
+---------------------------------------- -------------------------------------*/
 int TreeLikelihood_BeagleMultiPartition (int* divisions, int divisionCount, int chain, MrBFlt *lnL, int whichSitePats)
 {
     int         i, j, d, c = 0, nStates, beagleReturn, site, dIndex, divisionOffset;
@@ -2648,7 +2634,6 @@ int TreeLikelihood_BeagleMultiPartition (int* divisions, int divisionCount, int 
     hasAnyDataRestriction = NO;
 
     m = &modelSettings[0];
-    nStates = m->numModelStates;
 
     for (d=0; d<divisionCount; d++)
         {
@@ -2664,6 +2649,7 @@ int TreeLikelihood_BeagleMultiPartition (int* divisions, int divisionCount, int 
         /* find root node */
         p = t->root->left;
         
+        nStates = m->numModelStates;
         if (m->pInvar == NULL)
             {
             hasPInvar = NO;
@@ -2915,6 +2901,8 @@ int TreeLikelihood_BeagleMultiPartition (int* divisions, int divisionCount, int 
                 /* find nSitesOfPat */
                 nSitesOfPat = numSitesOfPat + (whichSitePats*numCompressedChars) + m->compCharStart;
                 
+                (*lnLDiv) = 0.0;
+
                 site = 0;
                 for (i=0; i<dIndex; i++) {
                     site += modelSettings[i].numChars;
@@ -2923,7 +2911,6 @@ int TreeLikelihood_BeagleMultiPartition (int* divisions, int divisionCount, int 
                     {
                     if (m->dataType == RESTRICTION)
                         {
-                        (*lnLDiv) = 0.0;
                         pUnobserved = 0.0;
                         for (c=0; c<m->numDummyChars; c++)
                             {
@@ -2941,8 +2928,6 @@ int TreeLikelihood_BeagleMultiPartition (int* divisions, int divisionCount, int 
                     }
                 else
                     {
-                    (*lnLDiv) = 0.0;
-
                     /* has invariable category */
                     pInvar =  *(GetParamVals (m->pInvar, chain, state[chain]));
                     clInvar = m->invCondLikes;
@@ -3009,13 +2994,13 @@ int TreeLikelihood_BeagleMultiPartition (int* divisions, int divisionCount, int 
 #endif /* BEAGLE_ENABLED */
 
 
-void BeagleNotLinked (void)
+void BeagleNotLinked()
 {
     MrBayesPrint ("%s   BEAGLE library is not linked to this executable.\n", spacer);
 }
 
 
-void BeagleThreadsNotAvailable (void)
+void BeagleThreadsNotAvailable()
 {
     MrBayesPrint ("%s   BEAGLE CPU threading requires v3.1 and higher of the library.\n", spacer);
 }

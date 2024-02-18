@@ -1,3 +1,21 @@
+# mrbayes_volpiano
+
+This is a fork of MrBayes v3.2.7a, a programme for estimation of phylogenetic trees using Bayesian inference. This fork differs from the original in that the standard character coding is no longer intended for morphology in biological datasets but rather for the encoding of plainchant melodies in the volpiano format. The original README is provided below as well as the license and modified source code. A note has been added to the greeting text to make it clear that this is a fork only intended to be used for analysing plainchant melodies in volpiano format rather than the original biological sequence data.
+
+If you use this programme please cite both the original paper (and the appropriate sections in the command `citations`):
+
+Ronquist, F. et al. 2012. MRBAYES 3.2: Efficient Bayesian phylogenetic     
+         inference and model selection across a large model space.               
+         Syst. Biol. 61:539-542.
+	 
+and the paper in which we present the application to this new study system:
+
+Hajič jr., J., *Ballen, G.A.*, Mühlová, K.H., & Vlhová-Wörner, H. (2023). Towards Building a Phylogeny of Gregorian Chant Melodies. Proceedings of the 24th International Society for Music Information Retrieval Conference, 571–578. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10340442.svg)](https://doi.org/10.5281/zenodo.10340442)
+
+Gustavo A. Ballen, PhD.
+
+============ Original README
+
 Hi,
 
 This is the GitHub repository for MrBayes, a program used for Bayesian
@@ -18,16 +36,17 @@ Build instructions, very very short version (would install MrBayes as
 Current repository directory layout:
 
     .
-    ├── autotools      : Files relating to the build system
+    ├── am-*           : Files relating to the build system
     ├── doc
-    │   └── manual     : The manual
+    │   ├── manual     : The manual
+    │   └── tutorial   : A tutorial
     ├── examples       : Example input data sets
     └── src            : C source code
 
 
-The MrBayes web site is available at
+The web site is available at
 
-    http://mrbayes.net/
+    http://NBISweden.github.io/MrBayes/
 
 
 Historical releases are tagged with "v3.2.0" (etc.) from release 3.2.0

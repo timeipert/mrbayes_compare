@@ -1,7 +1,7 @@
 /*
  *  MrBayes 3
  *
- *  (c) 2002-2023
+ *  (c) 2002-2013
  *
  *  John P. Huelsenbeck
  *  Dept. Integrative Biology
@@ -286,37 +286,39 @@ void CopyBits (BitsLong *dest, BitsLong *source, int length)
 
 
 /* CopyResults: copy results from one file to another up to lastGen*/
-int CopyResults (FILE *toFile, char *fromFileName, long long lastGen)
+int CopyResults (FILE *toFile, char *fromFileName, int lastGen)
 {
-    int         longestLine;
-    long long   tempL;
-    char        *strBuf, *strCpy, *word;
-    FILE        *fromFile;
+    int     longestLine;
+    char    *strBuf, *strCpy, *word;
+    FILE    *fromFile;
 
     if ((fromFile = OpenBinaryFileR(fromFileName)) == NULL)
         return ERROR;
 
     longestLine = LongestLine(fromFile)+10;
     SafeFclose(&fromFile);
+    strBuf = (char *) SafeCalloc (2*(longestLine+2),sizeof(char));
+    strCpy = strBuf + longestLine + 2;
 
     if ((fromFile = OpenTextFileR(fromFileName)) == NULL)
+        {
+        free (strBuf);
         return ERROR;
-
-    strBuf = (char *)SafeCalloc(longestLine, sizeof(char));
-    strCpy = (char *)SafeCalloc(longestLine, sizeof(char));
-
+        }
+    
     while (fgets(strBuf,longestLine,fromFile)!=NULL)
         {
         strncpy (strCpy,strBuf,longestLine);
         word = strtok(strCpy," ");
-        if (sscanf(word, "%lli", &tempL)==1 && tempL>lastGen)
+        /* atoi returns 0 when word is not integer number */
+        if (atoi(word)>lastGen)
             break;
-        fprintf(toFile,"%s",strBuf);
+        fprintf (toFile,"%s",strBuf);
         fflush (toFile);
         }
     
     SafeFclose(&fromFile);
-    free(strBuf); free(strCpy);
+    free(strBuf);
     return (NO_ERROR);
 }
 
@@ -334,13 +336,15 @@ int CopyProcessSsFile (FILE *toFile, char *fromFileName, int lastStep, MrBFlt *m
 
     longestLine = LongestLine(fromFile)+10;
     SafeFclose(&fromFile);
+    strBuf = (char *) SafeCalloc (2*(longestLine+2),sizeof(char));
+    strCpy = strBuf + longestLine + 2;
 
     if ((fromFile = OpenTextFileR(fromFileName)) == NULL)
+        {
+        free (strBuf);
         return ERROR;
-
-    strBuf = (char *)SafeCalloc(longestLine, sizeof(char));
-    strCpy = (char *)SafeCalloc(longestLine, sizeof(char));
-
+        }
+    
     while (fgets(strBuf,longestLine,fromFile)!=NULL)
         {
         strncpy (strCpy,strBuf,longestLine);
@@ -348,7 +352,7 @@ int CopyProcessSsFile (FILE *toFile, char *fromFileName, int lastStep, MrBFlt *m
         /* atoi returns 0 when word is not integer number */
         if (atoi(word)>lastStep)
             break;
-        fprintf(toFile,"%s",strBuf);
+        fprintf (toFile,"%s",strBuf);
         fflush (toFile);
         curStep = atoi(word);
         if (curStep > 0)
@@ -359,7 +363,7 @@ int CopyProcessSsFile (FILE *toFile, char *fromFileName, int lastStep, MrBFlt *m
                 tmpcp = strtok(NULL,"\t\n");
                 if (tmpcp == NULL)
                     {
-                    MrBayesPrint ("%s   Error: In .ss file not enough elements on the string :%s         \n", spacer, strBuf);
+                    MrBayesPrint ("%s   Error: In .ss file not enough ellements on the string :%s        \n", spacer, strBuf);
                     return ERROR;
                     }
                 tmp = atof(tmpcp);
@@ -375,7 +379,7 @@ int CopyProcessSsFile (FILE *toFile, char *fromFileName, int lastStep, MrBFlt *m
                 tmpcp = strtok(NULL,"\t\n");
                 if (tmpcp == NULL)
                     {
-                    MrBayesPrint ("%s   Error: In .ss file not enough elements on the string :%s         \n", spacer, strBuf);
+                    MrBayesPrint ("%s   Error: In .ss file not enough ellements on the string :%s        \n", spacer, strBuf);
                     return ERROR;
                     }
                 tmp = atof(tmpcp);
@@ -385,18 +389,17 @@ int CopyProcessSsFile (FILE *toFile, char *fromFileName, int lastStep, MrBFlt *m
         }
     
     SafeFclose(&fromFile);
-    free(strBuf); free(strCpy);
+    free(strBuf);
     return (NO_ERROR);
 }
 
 
 /* CopyTreeResults: copy tree results upto lastGen from one file to another. numTrees is return containing number of trees that were copied. */
-int CopyTreeResults (FILE *toFile, char *fromFileName, long long lastGen, int *numTrees)
+int CopyTreeResults (FILE *toFile, char *fromFileName, int lastGen, int *numTrees)
 {
-    int         longestLine;
-    long long   tempL;
-    char        *strBuf, *strCpy, *word;
-    FILE        *fromFile;
+    int     longestLine;
+    char    *strBuf, *strCpy, *word;
+    FILE    *fromFile;
     
     (*numTrees) = 0;
 
@@ -405,13 +408,15 @@ int CopyTreeResults (FILE *toFile, char *fromFileName, long long lastGen, int *n
 
     longestLine = LongestLine(fromFile)+10;
     SafeFclose(&fromFile);
+    strBuf = (char *) SafeCalloc (2*(longestLine+2),sizeof(char));
+    strCpy = strBuf + longestLine + 2;
 
     if ((fromFile = OpenTextFileR(fromFileName)) == NULL)
+        {
+        free (strBuf);
         return ERROR;
-
-    strBuf = (char *)SafeCalloc(longestLine, sizeof(char));
-    strCpy = (char *)SafeCalloc(longestLine, sizeof(char));
-
+        }
+    
     while (fgets(strBuf,longestLine,fromFile)!=NULL)
         {
         strncpy (strCpy,strBuf,longestLine);
@@ -419,19 +424,20 @@ int CopyTreeResults (FILE *toFile, char *fromFileName, long long lastGen, int *n
         if (strcmp(word,"tree")==0)
             {
             word = strtok(NULL," ");
-            /* 4 is offset to get rid of "rep." in tree name */
-            if (sscanf(word+4, "%lli", &tempL)==1 && tempL>lastGen)
+            /* atoi returns 0 when word is not integer number,
+               4 is offset to get rid of "rep." in tree name */
+            if (atoi(word+4)>lastGen)
                 break;
             (*numTrees)++;
-            fprintf(toFile,"%s",strBuf);
+            fprintf (toFile,"%s",strBuf);
             }
         else if (*numTrees == 0)   /* do not print the end statement */
-            fprintf(toFile,"%s",strBuf);
+            fprintf (toFile,"%s",strBuf);
         fflush (toFile);
         }
         
     SafeFclose(&fromFile);
-    free(strBuf); free(strCpy);
+    free(strBuf);
     return (NO_ERROR);
 }
 
@@ -981,7 +987,7 @@ int LongestLine (FILE *fp)
 void LowerUpperMedian (MrBFlt *vals, int nVals, MrBFlt *lower, MrBFlt *upper, MrBFlt *median)
 
 {    
-    SortMrBFlt_Asc (vals, 0, nVals-1);
+    SortMrBFlt (vals, 0, nVals-1);
     
     *lower  = vals[(int)(0.025*nVals)];
     *upper  = vals[(int)(0.975*nVals)];
@@ -996,7 +1002,7 @@ void LowerUpperMedianHPD (MrBFlt *vals, int nVals, MrBFlt *lower, MrBFlt *upper,
     int     i, width, theStart;
     MrBFlt  f, g, interval;
 
-    SortMrBFlt_Asc (vals, 0, nVals-1);
+    SortMrBFlt (vals, 0, nVals-1);
     
     width = (int)(nVals * 0.95 + 0.5);
     theStart = 0;
@@ -1080,10 +1086,10 @@ void MeanVariance (MrBFlt *vals, int nVals, MrBFlt *mean, MrBFlt *var)
 @param vals    pointer to values in log scale
 @param nVals   number of "vals", minimum 1
 @param mean    address of variable where computed mean is returned by the function
-@param var     address of variable where computed variance is returned by the function. Could be set to NULL if this value need not to be returned. 
-@param varEst  address of variable where computed estimate of the population variance is returned, could be set to NULL if this value need not to be returned. 
-               Could be set to NULL if this value need not to be returned.
-Note: We divide by nVals or by (nVals-1) when var and varEst is calculated from the sum of square differences. */
+@param var     address of variable where computed variance is returned by the function. Could be set to NULL if this value need not to be returened. 
+@param varEst  address of variable where computed estimate of the population variance is returned, could be set to NULL if this value need not to be returened. 
+               Could be set to NULL if this value need not to be returened.
+Note: We devide by nVals or by (nVals-1) when var and varEst is calculated from the sum of square differences. */
 void MeanVarianceLog (MrBFlt *vals, int nVals, MrBFlt *mean, MrBFlt *var, MrBFlt *varEst)
 {
     int             i;
@@ -1418,7 +1424,7 @@ MrBFlt PotentialScaleReduction (MrBFlt **vals, int nRuns, int *count)
 \param vals [0..nRuns][count[]]  All records for all runs
 \param nRuns                     Number of runs
 \param count [0..nRuns]          Number of records in each run
-\param returnESS [0..nRuns]      Is an array in which the routine returns ESS values for each run.
+\param returnESS [0..nRuns]      Is an arry in which the routine returns ESS values for each run.
 */
 void EstimatedSampleSize (MrBFlt **vals, int nRuns, int *count, MrBFlt *returnESS)
 {
@@ -1633,7 +1639,7 @@ void SetBit (int i, BitsLong *bits)
 }
 
 
-int MrBFlt_cmpAsc (const void *a, const void *b)
+int MrBFlt_cmp (const void *a, const void *b)
 {
     MrBFlt          x = * (MrBFlt *) a;
     MrBFlt          y = * (MrBFlt *) b;
@@ -1646,32 +1652,11 @@ int MrBFlt_cmpAsc (const void *a, const void *b)
     return 0;
 }
 
-
-int MrBFlt_cmpDes (const void *a, const void *b)
+/* SortMrBFlt: Sort in increasing order */
+void SortMrBFlt (MrBFlt *item, int left, int right)
 {
-    MrBFlt          x = * (MrBFlt *) a;
-    MrBFlt          y = * (MrBFlt *) b;
-
-    if (x > y)
-        return -1;
-    else if (x < y)
-        return 1;
-
-    return 0;
-}
-
-
-/* Sort MrBFlt in increasing order */
-void SortMrBFlt_Asc (MrBFlt *item, int left, int right)
-{
-    qsort ((void *) item, right - left + 1, sizeof (MrBFlt), &MrBFlt_cmpAsc);
-}
-
-
-/* Sort MrBFlt in decreasing order */
-void SortMrBFlt_Des (MrBFlt *item, int left, int right)
-{
-    qsort ((void *) item, right - left + 1, sizeof (MrBFlt), &MrBFlt_cmpDes);
+    qsort ((void *) item, right - left + 1, sizeof (MrBFlt),
+           &MrBFlt_cmp);
 }
 
 
@@ -3036,7 +3021,7 @@ int CopyToPolyTreeFromPolyTree (PolyTree *to, PolyTree *from)
         }
     else
         {
-        assert (to->memNodes >= from->memNodes);/*Otherwise partition length would not be long enough for nodes in "to" */
+        assert (to->memNodes >= from->memNodes);/*Otherwise partition length woould not be long enough for nodes in "to" */
         nLongsNeeded = (from->memNodes/2 - 1) / nBitsInALong + 1;
         }
 
@@ -4285,7 +4270,16 @@ int InitCalibratedBrlens (Tree *t, MrBFlt clockRate, RandLong *seed)
             if (p->anc->anc != NULL)
                 {
                 p->length = p->anc->nodeDepth - p->nodeDepth;
-                // no need to check p->length < BRLENS_MIN or p->length > BRLENS_MAX
+                if (p->length < BRLENS_MIN)
+                    {
+                    //MrBayesPrint ("%s   Restrictions of node calibration and clockrate makes some branch lengths too small.\n", spacer);
+                    //return (ERROR);
+                    }
+                if (p->length > BRLENS_MAX)
+                    {
+                    //MrBayesPrint ("%s   Restrictions of node calibration and clockrate makes some branch lengths too long.\n", spacer);
+                    //return (ERROR);
+                    }
                 }
             else
                 p->length = 0.0; //not a problem for root node. 
@@ -4487,7 +4481,7 @@ int GetRandomEmbeddedSubtree (Tree *t, int nTerminals, RandLong *seed, int *nEmb
 |
 | IsCalibratedClockSatisfied: This routine SETS (not just checks as name suggested) calibrated clock tree nodes age, depth. based on branch lengths
 |     and checks that user defined brlens satisfy the specified calibration(s) up to tolerance tol
-| TODO: clock rate is divided here and used to set ages but clockrate parameter is not updated here (make sure that it does not produce inconsistency)
+| TODO: clock rate is devived here and used to set ages but clockrate parameter is not updated here (make sure that it does not produce inconsistancy)
 |
 |------------------------------------------------------------------------------*/
 int IsCalibratedClockSatisfied (Tree *t,MrBFlt *minClockRate,MrBFlt *maxClockRate , MrBFlt tol)
@@ -4496,7 +4490,7 @@ int IsCalibratedClockSatisfied (Tree *t,MrBFlt *minClockRate,MrBFlt *maxClockRat
     MrBFlt          f, maxHeight, minRate=0, maxRate=0, ageToAdd, *x, *y, clockRate;
     TreeNode        *p, *q, *r, *s;
 
-    /* By default assume the tree does not have allowed range of clockrate */
+    /* By defauult assume the tree does not have allowed range of clockrate */
     *minClockRate = 2.0;
     *maxClockRate = 1.0;
 
@@ -4578,11 +4572,11 @@ int IsCalibratedClockSatisfied (Tree *t,MrBFlt *minClockRate,MrBFlt *maxClockRat
             q = t->allDownPass[j];
             if (x[q->index] < 0.0 && y[q->index] < 0.0)
                 continue;
-            if (p->nodeDepth == q->nodeDepth) // because clock rate could be as low as possible we can not take approximate equality. 
+            if (p->nodeDepth == q->nodeDepth) // becouse clock rate could be as low as possible we can not take approximate equality. 
                 {
                 /* same depth so they must share a possible age */
-                if ((x[p->index] != -1.0 && y[q->index] != -1.0 && AreDoublesEqual (x[p->index], y[q->index], tol) == NO && x[p->index] > y[q->index]) ||
-                    (y[p->index] != -1.0 && x[q->index] != -1.0 && AreDoublesEqual (y[p->index], x[q->index], tol) == NO && y[p->index] < x[q->index]))
+                if ((x[p->index] != -1.0 && y[q->index] !=-1.0 && AreDoublesEqual (x[p->index], y[q->index], tol) == NO && x[p->index] > y[q->index]) ||
+                    (y[p->index] != -1.0 && x[q->index] !=-1.0 && AreDoublesEqual (y[p->index], x[q->index], tol) == NO && y[p->index] < x[q->index]))
                     {
                     isViolated = YES;
                     break;
@@ -4607,8 +4601,7 @@ int IsCalibratedClockSatisfied (Tree *t,MrBFlt *minClockRate,MrBFlt *maxClockRat
                         {
                         if (AreDoublesEqual (r->nodeDepth, s->nodeDepth, tol*0.1) == YES)
                             continue;
-                        if ((r->calibration != NULL && r->calibration->prior != fixed) ||
-                            (s->calibration != NULL && s->calibration->prior != fixed))
+                        if ((r->calibration != NULL && r->calibration->prior != fixed) || (s->calibration != NULL && s->calibration->prior != fixed))
                             continue;
                         isViolated = YES;
                         break;
@@ -4653,7 +4646,7 @@ int IsCalibratedClockSatisfied (Tree *t,MrBFlt *minClockRate,MrBFlt *maxClockRat
         return (NO);
         }
     
-    /* Allow tolerance */
+    /* Allow tollerance */
     if (minRateConstrained == YES && maxRateConstrained == YES && AreDoublesEqual (minRate, maxRate, tol) == YES && minRate > maxRate) 
         {
         maxRate = minRate;
@@ -4690,7 +4683,7 @@ int IsCalibratedClockSatisfied (Tree *t,MrBFlt *minClockRate,MrBFlt *maxClockRat
         p->age = p->nodeDepth / clockRate;
         }
 
-    /* check if there is an age to add (I guess this is here because when max rate is close to minrate and we have numerical precision inaccuracy) */
+    /* check if there is an age to add (I guess this is here because when max rate is close to minrate and we have numerical precision inacuracy) */
     ageToAdd = 0.0;
     for (i=0; i<t->nNodes-1; i++)
         {
@@ -4761,7 +4754,7 @@ int IsClockSatisfied (Tree *t, MrBFlt tol)
                 {
                 if (AreDoublesEqual (firstLength, length, tol) == NO)
                     {
-                    MrBayesPrint ("%s   Node (%s) is not at the same depth as some other tip taking calibration into account. \n", spacer, p->label);
+                    MrBayesPrint ("%s   Node (%s) is not at the same depth as some other tip taking colibration into account. \n", spacer, p->label);
                     isClockLike = NO;
                     }
                 }
@@ -4809,42 +4802,9 @@ int IsTreeConsistent (Param *param, int chain, int state)
         return NO;
         }
 
-    if (tree->isRooted == NO)
+    if (tree->isClock == NO)
         {
-        if (modelSettings[param->relParts[0]].parsModelId == YES)
-            {
-            for (i=0; i<tree->nNodes-1; i++)
-                {
-                p = tree->allDownPass[i];
-                if (p->length != 0.0)
-                    {
-                    printf ("Node %d does has non-zero branch length %f for parsimony tree\n", p->index, p->length);
-                    return NO;
-                    }
-                }
-            return YES;
-            }
-        else
-            {
-            for (i=0; i<tree->nNodes-1; i++)
-                {
-                p = tree->allDownPass[i];
-                if (p->length <= 0.0)
-                    {
-                    if (p->length == 0.0)
-                        printf ("Node %d has zero branch length %f\n", p->index, p->length);
-                    else
-                        printf ("Node %d has negative branch length %f\n", p->index, p->length);
-                    return NO;
-                    }
-                }
-            return YES;
-            }
-        }
-
-    if (tree->isRooted == YES && tree->isClock == NO)
-        {
-        for (i=0; i<tree->nNodes-2; i++)
+        for (i=0; i<tree->nNodes-1; i++)
             {
             p = tree->allDownPass[i];
             if (p->length <= 0.0)
@@ -4859,9 +4819,7 @@ int IsTreeConsistent (Param *param, int chain, int state)
         return YES;
         }
 
-
     /* Clock trees */
-    /* tree->isRooted == YES && tree->isClock == YES */
 
     /* Check that lengths and depths are consistent */
     for (i=0; i<tree->nNodes-2; i++) {
@@ -4927,7 +4885,7 @@ int IsTreeConsistent (Param *param, int chain, int state)
     for (i=0; i<param->nSubParams; i++)
         {
         subParm = param->subParams[i];
-        if (subParm->paramId == TK02BRANCHRATES)
+        if (subParm->paramId == TK02BRANCHRATES || (subParm->paramId == MIXEDBRCHRATES && *GetParamIntVals(subParm, chain, state) == RCL_TK02))
             {
             rAnc = GetParamVals(subParm, chain, state)[tree->root->left->index];
             if (fabs(rAnc - 1.0) > 1E-6)
@@ -4948,9 +4906,8 @@ int IsTreeConsistent (Param *param, int chain, int state)
                     }
                 }
             }
-        else if (subParm->paramId == ILNBRANCHRATES || subParm->paramId == IGRBRANCHRATES ||
-                 subParm->paramId == MIXEDBRCHRATES || subParm->paramId == WNBRANCHRATES)
-            {    // *GetParamIntVals(subParm, chain, state) == RCL_ILN or RCL_IGR
+        else if (subParm->paramId == IGRBRANCHRATES || (subParm->paramId == MIXEDBRCHRATES && *GetParamIntVals(subParm, chain, state) == RCL_IGR))
+            {
             for (j=0; j<tree->nNodes-2; j++)
                 {
                 p = tree->allDownPass[j];
@@ -4958,7 +4915,7 @@ int IsTreeConsistent (Param *param, int chain, int state)
                 r = GetParamVals(subParm, chain, state)[p->index];
                 if (fabs(p->length * r - b) > 0.000001)
                     {
-                    printf ("%s   Independent/uncorrelated relaxed clock mismatch in branch %d\n", spacer, p->index);
+                    printf ("%s   Igr relaxed clock mismatch in branch %d\n", spacer, p->index);
                     return NO;
                     }
                 }
@@ -5617,7 +5574,7 @@ void AppendRelaxedBranch (int a,int b,PolyTree *t)
 
 
 /**
-Swap relaxed clock parameters of the branch of nodes with index "a" and "b".
+Swap relaxed clock paramiters of the branch of nodes with index "a" and "b".
 */
 void SwapRelaxedBranchInfo (int a,int b,PolyTree *t)
 {
@@ -5658,7 +5615,7 @@ void SwapRelaxedBranchInfo (int a,int b,PolyTree *t)
 |      included taxa.  NB! All tree nodes cannot be accessed by cycling over the
 |      pt->nodes array after the deletion, because some spaces will be occupied by deleted
 |      nodes and pt->nNodes is no longer the length of this array
-|      (if proper rearrangement of pt->nodes needed then remove "#if 0" and make changes to p->x, see below).
+|      (if proper re-arangment of pt->nodes needed then remove "#if 0" and make changes to p->x, see below).
 |
 ---------------------------------------------------------------------------------------------*/
 int PrunePolyTree (PolyTree *pt)
@@ -5908,15 +5865,15 @@ int RandPerturb (Tree *t, int nPert, RandLong *seed)
 
 
 /*
-|       Reorder array of nodes "nodeArray" such that first nodes in it could be paired with "w" to create immediate common ancestor and this ancestor node would not violate any constraint.  
+|       Reorder array of nodes "nodeArray" such that first nodes in it could be paired with "w" to create imediat common ancestor and this ancesor node would not vialate any constraint.  
 |       
 | @param w                      Reference node as described 
 | @param nodeArray              A set of node to order as described
-| @param activeConstraints      Array containing indices of active constraints in the set of defined constraints
-| @param nLongsNeeded           Length of partition information (in BitsLong) in a node and constraint definition.
-| @param isRooted               Do constraints apply to rooted tree YES or NO
+| @param activeConstraints      Array containing indeces of active constraints in the set of defined constraints
+| @param nLongsNeeded           Length of partition information (in BitsLong) in a node and constraint deffinition.
+| @param isRooted               Do constraints apply to rootet tree YES or NO
 |
-| @return                       Number of nodes in "nodeArray" that could be paired  with "w" to create immediate common ancestor and this ancestor node would not violate any constraint
+| @return                       Number of nodes in "nodeArray" that could be paired  with "w" to create imediat common ancestor and this ancesor node would not vialate any constraint
 */
 int ConstraintAllowedSet(PolyNode *w, PolyNode **nodeArray, int nodeArraySize, int *activeConstraints, int activeConstraintsSize, int nLongsNeeded, int isRooted)
 {
@@ -5932,11 +5889,11 @@ int ConstraintAllowedSet(PolyNode *w, PolyNode **nodeArray, int nodeArraySize, i
             {
             if ((IsPartNested(definedConstraintPruned[k], w->partition, nLongsNeeded) == YES) ||
                 (isRooted == NO && IsPartNested(definedConstraintTwoPruned[k], w->partition, nLongsNeeded) == YES))
-                continue;/* all nodes are comparable because condition of the constraint has to be satisfied in the subtree rooted at w*/
+                continue;/* all nodes are compartable because condition of the constraint has to be sutsfied in the subtree rooted at w*/
 
             FirstEmpty = IsSectionEmpty(definedConstraintPruned[k], w->partition, nLongsNeeded);
             if (FirstEmpty == YES &&  IsSectionEmpty(definedConstraintTwoPruned[k], w->partition, nLongsNeeded) == YES)
-                continue; /* all nodes are comparable because w does not contain any constraint taxa*/
+                continue; /* all nodes are compartable becouse w does not contain any constraint taxa*/
 
             assert (FirstEmpty^IsSectionEmpty(definedConstraintTwoPruned[k], w->partition, nLongsNeeded));
 
@@ -5953,7 +5910,7 @@ int ConstraintAllowedSet(PolyNode *w, PolyNode **nodeArray, int nodeArraySize, i
                 {
                 if (IsSectionEmpty(constraintPartition[k], nodeArray[i]->partition, nLongsNeeded) == NO &&
                     ((FirstEmpty == NO && isRooted== YES) ||  IsPartNested(constraintPartition[k], nodeArray[i]->partition, nLongsNeeded) == NO))
-                  /*second part of if statement is to bail out "nodeArray[i]" when "w" contains nodes for example from definedConstraintPruned and "nodeArray[i]" have definedConstraintTwoPruned fully nested in it
+                  /*second part of if statment is to bail out "nodeArray[i]" when "w" contains nodes for example from definedConstraintPruned and "nodeArray[i]" have definedConstraintTwoPruned fully nested in it
                   This bail out not applicable if t->isRooted== YES Since we should create a rooting node for the first set of taxa in the constraint.
                   Note that such case possible because we may have hard constraint node that fully nest definedConstraintTwoPruned but also having taxa from definedConstraintPruned keeping constraint active.*/
                     {
@@ -5997,9 +5954,9 @@ int ConstraintAllowedSet(PolyNode *w, PolyNode **nodeArray, int nodeArraySize, i
 |               Check if "partition" violate any constraint.  
 |       
 | @param partiton               Partition to check 
-| @param activeConstraints      Array containing indices of active constraints in the set of defined constraints  
-| @param nLongsNeeded           Length of partition information (in BitsLong) in a node and constraint definition
-| @param isRooted               Do constraints apply to rooted tree YES or NO
+| @param activeConstraints      Array containing indeces of active constraints in the set of defined constraints  
+| @param nLongsNeeded           Length of partition information (in BitsLong) in a node and constraint deffinition
+| @param isRooted               Do constraints apply to rootet tree YES or NO
 |
 | @return                       Index of first violated constraint in activeConstraints array, -1 if no constraint is violated.
 */
@@ -6039,11 +5996,11 @@ int ViolatedConstraint(BitsLong *partition, int *activeConstraints, int activeCo
 
 
 /*
-|         Remove from activeConstraints references to constraints that become satisfied if PolyNode "w" exist, i.e. they do not need to be checked further thus become not active  
+|         Remove from activeConstraints references to constraints that become satisfied if PolyNode "w" exist, i.e. they do not need to be checked furter thus become not active  
 |
-| @param activeConstraints      Array containing indices of active constraints in the set of defined constraints
-| @param nLongsNeeded           Length of partition information (in BitsLong) in a node and constraint definition.
-| @param isRooted               Do constraints apply to rooted tree YES or NO
+| @param activeConstraints      Array containing indeces of active constraints in the set of defined constraints
+| @param nLongsNeeded           Length of partition information (in BitsLong) in a node and constraint deffinition.
+| @param isRooted               Do constraints apply to rootet tree YES or NO
 |
 | @return                       Size of pruned "activeConstraints" array
 */
@@ -6096,7 +6053,7 @@ int PruneActiveConstraints (PolyNode *w, int *activeConstraints, int activeConst
 |
 | @param    tt is a tree which contains information about applicable constraints. If it is set to NULL then no constraints will be used. 
 |           If t!=NULL then partitions of nodes of polytree should be allocated for example by AllocatePolyTreePartitions (t);
-| @return   NO_ERROR on success, ABORT if could not resolve a tree without violating some constraint, ERROR if any other error occur 
+| @return   NO_ERROR on succes, ABORT if could not resolve a tree without vialating some consraint, ERROR if any other error occur 
 ---------------------------------------------------------------------*/
 int RandResolve (Tree *tt, PolyTree *t, RandLong *seed, int destinationIsRooted)
 {
@@ -6188,7 +6145,7 @@ int RandResolve (Tree *tt, PolyTree *t, RandLong *seed, int destinationIsRooted)
             nodeArray[rand1] = nodeArray[--nodeArraySize];
 
             if (nodeArraySize==0)
-                return ABORT; /* Potentially here we could instead revert by removing last added node and try again. */
+                return ABORT; /* Potentaily here we could instead revert by removing last added node and try again. */
 
             /* Move all nodes in nodeArray which can be paired with w to the beginning of array */
             nodeArrayAllowedSize=ConstraintAllowedSet(w1, nodeArray, nodeArraySize, activeConstraints, activeConstraintsSize, nLongsNeeded, t->isRooted);
@@ -6255,6 +6212,8 @@ void ResetTreeNode (TreeNode *p)
     p->marked                 = NO;
     p->length                 = 0.0;
     p->nodeDepth              = 0.0;
+    p->x                      = 0;
+    p->y                      = 0;
     p->index                  = 0;
     p->isDated                = NO;
     p->calibration            = NULL;
@@ -6262,8 +6221,6 @@ void ResetTreeNode (TreeNode *p)
     p->isLocked               = NO;
     p->lockID                 = -1;
     p->label                  = noLabel;
-    p->x                      = 0;
-    p->y                      = 0;
     p->d                      = 0.0;
     p->partition              = NULL;
 }
@@ -6384,7 +6341,7 @@ int ResetRootHeight (Tree *t, MrBFlt rootHeight)
 
     if (t->isClock == NO)
         return ERROR;
-
+    
     /* make sure node depths are set */
     for (i=0; i<t->nNodes-1; i++)
         {
@@ -6465,7 +6422,7 @@ void ResetTipIndices(PolyTree *pt)
 /*----------------------------------------------
 |
 |   ResetTopology: rebuild the tree t to fit the 
-|      Newick string s. Everything except topology
+|      Newick string s. Everyting except topology
 |      is left in the same state in t.
 |
 -----------------------------------------------*/
@@ -7312,7 +7269,7 @@ void SetNodeDepths (Tree *t)
 }
 
 
-/* Set ages of a clock tree according to depth and clockrate. Check that resulting ages are consistent with calibration.
+/* Set ages of a clock tree according to depth and clockrate. Check that resulting ages are consistant with calibration.
 |  return YES if tree is age consistent, No otherwise.
 */
 int SetTreeNodeAges (Param *param, int chain, int state)
@@ -7333,7 +7290,7 @@ int SetTreeNodeAges (Param *param, int chain, int state)
 
     /* Clock trees */
 
-    /* Check that lengths and depths are consistent. That would work for the case when we set up branch length from starting tree  */
+    /* Check that lengths and depths are consistant. That would work for the case when we set up branch length from starting tree  */
     for (i=0; i<tree->nNodes-1; i++) {
         p = tree->allDownPass[i];
         p->age =  p->nodeDepth / clockRate;
@@ -9595,7 +9552,9 @@ void BetaBreaks (MrBFlt alpha, MrBFlt beta, MrBFlt *values, int K)
         
 #   if 0
     for (i=0; i<K; i++)
+        {
         MrBayesPrint ("%4d %lf %lf\n", i, values[i]);
+        }
 #   endif
 }
 
@@ -10073,7 +10032,7 @@ void ComplexLUBackSubstitution (int dim, MrBComplex **a, int *indx, MrBComplex *
 |      a        -- the matrix
 |      dim      -- the dimension of the square matrix a and its inverse
 |      vv       -- a work vector of doubles
-|      indx     -- row permutation according to partial pivoting sequence
+|      indx     -- row permutation according to partitial pivoting sequence
 |      pd       -- 1 if number of row interchanges was even, -1 if number of
 |                  row interchanges was odd. Can be NULL.
 |      
@@ -10460,36 +10419,6 @@ void DirichletRandomVariable (MrBFlt *alp, MrBFlt *z, int n, RandLong *seed)
 
 
 /*---------------------------------------------------------------------------------
- |
- |   LnDirichlet
- |
- |   Calculates the log density of the Dirichlet distribution. //SK
- |
- |
- ---------------------------------------------------------------------------------*/
-MrBFlt LnDirichlet (MrBFlt *alphai, MrBFlt *xi, int lengthi)
-{
-    MrBFlt sum = 0.0;
-    MrBFlt dirprob;
-    int i;
-
-    for (i=0; i<lengthi; i++)
-        sum += alphai[i];
-
-    dirprob = LnGamma(sum);
-
-    for (i=0; i<lengthi; i++)
-        dirprob -= LnGamma(alphai[i]);
-
-    for (i=0; i<lengthi; i++)
-        dirprob += (alphai[i] - 1.0)*log(xi[i]);
-
-    return (dirprob);
-
-}
-
-
-/*---------------------------------------------------------------------------------
 |
 |   DiscreteGamma
 |
@@ -10543,6 +10472,8 @@ int DiscreteGamma (MrBFlt *rK, MrBFlt alfa, MrBFlt beta, int K, int median)
  |
  |   LBH Notes:     K = # of rate classes
  |                *rK = pointer to output rate class matrix
+ |               alfa = alpha param
+ |               beta = beta param
  |             median = flag to use media or not (1 = use median, 0 = mean?)
  |
  ---------------------------------------------------------------------------------*/
@@ -10550,11 +10481,12 @@ int DiscreteLogNormal (MrBFlt *rK, MrBFlt sigma, int K, int median)
 {
     int i;
     MrBFlt t, factor;
-    MrBFlt mu = -0.5*sigma*sigma;
+    MrBFlt sigmaL = sqrt(sigma);
+    MrBFlt mu = -0.5*sigmaL*sigmaL;
     if (median)
         {
         for (i=0; i<K; i++) {
-            rK[i] = QuantileLogNormal( ((2.0*i + 1) / (2.0 * K)), mu, sigma);
+            rK[i] = QuantileLogNormal( ((2.0*i + 1) / (2.0 * K)), mu, sigmaL);
             }
         for (i=0,t=0.0; i<K; i++) {
             t = t+rK[i];
@@ -10565,16 +10497,17 @@ int DiscreteLogNormal (MrBFlt *rK, MrBFlt sigma, int K, int median)
         }
     else
         {
+        mu = -0.5*sigmaL*sigmaL;
         /* Mean set to 1.0 so factor = K */
         factor = 1.0*K;
         for (i=0; i<K-1; i++) {
-            rK[i] = QuantileLogNormal(((i + 1.0) / K), mu, sigma);
+            rK[i] = QuantileLogNormal(((i + 1.0) / (K)), mu, sigmaL);
             }
         for (i=0; i<K-1; i++) {
             //rK[i] = LogNormalPoint(rK[i], mu, sigma);
             //rK[i] = QuantileLogNormal(rK[i], mu, sigma);
             //rK[i] = CdfNormal((log(rK[i])-mu)/sigma);
-            rK[i] = 1 - (1.0 * CdfNormal((mu + sigma*sigma - log(rK[i])) / sigma));
+            rK[i] = 1 - (1.0 * CdfNormal((mu + sigmaL*sigmaL - log(rK[i]))/sigmaL));
             }
         rK[K-1] = 1.0;
         for (i=K-1; i>0; i--) {
@@ -10648,7 +10581,7 @@ MrBFlt D_sign (MrBFlt a, MrBFlt b)
 |
 |   Eigens
 |
-|   The matrix of interest is a. The output is the real and imaginary parts of the 
+|   The matrix of interest is a. The ouptut is the real and imaginary parts of the 
 |   eigenvalues (wr and wi). z contains the real and imaginary parts of the 
 |   eigenvectors. iv2 and fv1 are working vectors.
 |      
@@ -11195,7 +11128,7 @@ void GaussianElimination (int dim, MrBFlt **a, MrBFlt **bMat, MrBFlt **xMat)
 |
 |   GetEigens
 |
-|   returns NO if non complex eigendecomposition, YES if complex eigendecomposition,  ABORT if an error has occurred
+|   returns NO if non complex eigendecomposition, YES if complex eigendecomposition,  ABORT if an error has occured
 |
 ---------------------------------------------------------------------------------*/
 int GetEigens (int dim, MrBFlt **q, MrBFlt *eigenValues, MrBFlt *eigvalsImag, MrBFlt **eigvecs, MrBFlt **inverseEigvecs, MrBComplex **Ceigvecs, MrBComplex **CinverseEigvecs)
@@ -13112,10 +13045,38 @@ MrBFlt LnProbTruncGamma (MrBFlt alpha, MrBFlt beta, MrBFlt x, MrBFlt min, MrBFlt
 
 
 /* Log probability for a value drawn from a lognormal distribution */
-/* mu and sigma are on the log scale */
-MrBFlt LnProbLogNormal (MrBFlt mu, MrBFlt sigma, MrBFlt x)
+MrBFlt LnProbLogNormal (MrBFlt exp, MrBFlt sd, MrBFlt x)
 {
     MrBFlt lnProb, z;
+    
+    z = (log(x) - exp) / sd;
+    
+    lnProb = - log (x * sd * sqrt (2.0 * M_PI)) - (z * z / 2.0);
+    
+    return lnProb;
+}
+
+
+/* Log ratio for two values drawn from a lognormal distribution */
+MrBFlt LnRatioLogNormal (MrBFlt exp, MrBFlt sd, MrBFlt xNew, MrBFlt xOld)
+{
+    MrBFlt  newZ, oldZ;
+    
+    newZ = (log(xNew) - exp) / sd;
+    oldZ = (log(xOld) - exp) / sd;
+    
+    return (oldZ * oldZ - newZ * newZ) / 2.0 + log(xOld) - log(xNew);
+}
+
+
+/* Log probability for a value drawn from a lognormal distribution;
+   parameters are mean and variance of value (not of log value) */
+MrBFlt LnProbTK02LogNormal (MrBFlt mean, MrBFlt var, MrBFlt x)
+{
+    MrBFlt  z, lnProb, mu, sigma;
+    
+    sigma = sqrt(log(1.0 + (var / (mean*mean))));
+    mu    = log(mean) - sigma * sigma / 2.0;
     
     z = (log(x) - mu) / sigma;
     
@@ -13126,52 +13087,17 @@ MrBFlt LnProbLogNormal (MrBFlt mu, MrBFlt sigma, MrBFlt x)
 
 
 /* Log ratio for two values drawn from a lognormal distribution */
-/* mu and sigma are on the log scale */
-MrBFlt LnRatioLogNormal (MrBFlt mu, MrBFlt sigma, MrBFlt xNew, MrBFlt xOld)
+MrBFlt LnRatioTK02LogNormal (MrBFlt mean, MrBFlt var, MrBFlt xNew, MrBFlt xOld)
 {
-    MrBFlt  newZ, oldZ;
-    
-    newZ = (log(xNew) - mu) / sigma;
-    oldZ = (log(xOld) - mu) / sigma;
-    
-    return (oldZ * oldZ - newZ * newZ) / 2.0 + log(xOld) - log(xNew);
-}
+    MrBFlt  newZ, oldZ, mu, sigma;
 
-
-/* Log probability for a value drawn from a lognormal distribution;
-   parameters are natural mean (not of log value) and variance on log scale */
-MrBFlt LnProbLogNormal_Mean_LogVar (MrBFlt mean, MrBFlt sigma2, MrBFlt x)
-{
-    MrBFlt  mu, sigma;
-    
-    mu    = log(mean) - sigma2 / 2.0;
-    sigma = sqrt(sigma2);
-
-    return LnProbLogNormal(mu, sigma, x);
-}
-
-
-/* Log probability for a value drawn from a lognormal distribution;
-   parameters are mean and variance of value (not of log value) */
-MrBFlt LnProbLogNormal_Mean_Var (MrBFlt mean, MrBFlt var, MrBFlt x)
-{
-    MrBFlt  mu, sigma;
-    
-    sigma = sqrt(log(1.0 + var / (mean*mean)));
+    sigma = sqrt(log(1.0 + (var / (mean*mean))));
     mu    = log(mean) - sigma * sigma / 2.0;
 
-    return LnProbLogNormal(mu, sigma, x);
-}
+    newZ = (log(xNew) - mu) / sigma;
+    oldZ = (log(xOld) - mu) / sigma;
 
-
-/* Log probability for a value drawn from a normal distribution */
-MrBFlt LnProbNormal (MrBFlt mu, MrBFlt sigma, MrBFlt x)
-{
-    MrBFlt z;
-
-    z = (x - mu) / sigma;
-
-    return - log(sigma * sqrt(2.0 * M_PI)) - z * z / 2.0;
+    return (oldZ * oldZ - newZ * newZ) / 2.0 + log(xOld) - log(xNew);
 }
 
 
@@ -13209,7 +13135,7 @@ MrBFlt LogNormalRandomVariable (MrBFlt mean, MrBFlt sd, RandLong *seed)
     
     x = PointNormal(RandomNumber(seed));
 
-    x *= sd;
+    x*= sd;
     x += mean;
     
     return exp(x);
@@ -13554,23 +13480,6 @@ MrBFlt PointNormal (MrBFlt prob)
 
 /*---------------------------------------------------------------------------------
 |
-|   NormalRandomVariable
-|
-|   Draw a random variable from a normal distribution.
-|
----------------------------------------------------------------------------------*/
-MrBFlt NormalRandomVariable (MrBFlt mean, MrBFlt sd, RandLong *seed)
-{
-    MrBFlt      x;
-    
-    x = PointNormal(RandomNumber(seed));
-
-    return mean + x*sd;
-}
-
-
-/*---------------------------------------------------------------------------------
-|
 |   PrintComplexVector
 |
 |   Prints a vector of dim complex numbers.
@@ -13585,7 +13494,7 @@ void PrintComplexVector (int dim, MrBComplex *vec)
         {
         MrBayesPrint ("%lf + %lfi, ", vec[i].re, vec[i].im);
         if (i == 1) 
-            MrBayesPrint ("\n    ");
+            MrBayesPrint("\n    ");
         }
     MrBayesPrint ("%lf + %lfi}\n", vec[dim - 1].re, vec[dim - 1].im);
 }

@@ -1,11 +1,10 @@
-#ifndef MCMC_H_
-#define MCMC_H_
+#ifndef __MCMC_H__
+#define __MCMC_H__
 
 int     AddToPrintString (char *tempStr);
 void    AutotuneDirichlet (MrBFlt acceptanceRate, MrBFlt targetRate, int batch, MrBFlt *alphaPi, MrBFlt minTuning, MrBFlt maxTuning);
 void    AutotuneMultiplier (MrBFlt acceptanceRate, MrBFlt targetRate, int batch, MrBFlt *lambda, MrBFlt minTuning, MrBFlt maxTuning);
 void    AutotuneSlider (MrBFlt acceptanceRate, MrBFlt targetRate, int batch, MrBFlt *width, MrBFlt minTuning, MrBFlt maxTuning);
-void    AutotuneRJClocks (MrBFlt acceptanceRate, MrBFlt targetRate, int batch, MrBFlt *w, MrBFlt minTuning, MrBFlt maxTuning);
 int     DoMcmc (void);
 int     DoMcmcp (void);
 int     DoMcmcParm (char *parmName, char *tkn);
@@ -32,4 +31,4 @@ int     SafeSprintf (char **target, int *targetLen, char *fmt, ...);
 int     SetFilePositions (int samplePos);
 MrBFlt  TreeLength (Param *param, int chain);
 
-#endif  /* MCMC_H_ */
+#endif  /* __MCMC_H__ */

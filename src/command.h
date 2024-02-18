@@ -1,5 +1,5 @@
-#ifndef COMMAND_H_
-#define COMMAND_H_
+#ifndef __COMMAND_H__
+#define __COMMAND_H__
 
 int         AddString (char ***list, int len, char *token);
 BitsLong    Expecting (int y);
@@ -30,4 +30,4 @@ char        WhichNuc (int x);
 char        WhichRes (int x);
 char        WhichStand (int x);
 
-#endif  /* COMMAND_H_ */
+#endif  /* __COMMAND_H__ */

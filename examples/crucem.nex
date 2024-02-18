@@ -1,0 +1,17 @@
+#NEXUS
+
+Begin data;
+	Dimensions ntax=4 nchar=61;
+	Format datatype=standard interleave=no gap=-;
+
+	Matrix
+chant1  cddd-effedeeefgffd-------------------------------------------
+chant2  cddd-effedeeefgffdedcddddcacdeffedeegghgffdedcddcdefd----ecdd
+chant3  ccddCdffedege-DfededcddddCacd-ffedeegghffededcd--ddedf--edcDd
+chant4  ccdd-dffedege--fededcdddca9cd-ffed-egghffededcddcdeedfededcDd
+;
+end;
+
+begin mrbayes;
+
+lset coding=all;

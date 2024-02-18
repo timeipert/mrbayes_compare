@@ -1,12 +1,10 @@
 #NEXUS
 
-[ Truncated data from: Ronquist F, Klopfstein S, Vilhelmsen L, Schulmeister S, Murray DL, Rasnitsyn AP. 2012. A total-evidence approach to dating with fossils, applied to the early radiation of the Hymenoptera. Systematic Biology 61:973-999. ]
-[ Used in Zhang, C. 2017. Molecular Clock Dating using MrBayes. arXiv:1603.05707]
-[ Version: fre  3 jul 2020 14:59:27 Sign: JN]
+[I am a comment. Truncated data from: Ronquist et al. 2012. and Zhang et al. 2016. Sys Biol.]
 
 Begin data;
-	Dimensions ntax=20 nchar=510;
-	Format datatype=mixed(standard:1-200,DNA:201-510) interleave=yes gap=- missing=?;
+	Dimensions ntax = 20 nchar = 510;
+	Format datatype = mixed(standard:1-200, DNA:201-510) interleave = yes gap = - missing = ?;
 
 	Matrix
 [Morphology, Vilhelmsen, 200 chars]
@@ -80,103 +78,104 @@ Pseudoxyelocerus        --------------------------------------------------------
 	;
 End;
 
-[
 Begin mrbayes;
 
-    set autoclose=yes nowarnings=yes;
-
-	[3.2 Data partitions]
+	[partition]
 	charset MV = 1-200;
 	charset 16S = 201-300;
 	charset Ef1a = 301-510;
 	charset Ef1a12 = 301-510\3 302-510\3;
 	charset Ef1a3 = 303-510\3;
+
 	partition four = 4: MV, 16S, Ef1a12, Ef1a3;
 	set partition = four;
 
-
-	[3.3 Substitution models]
-	exclude 7 31 61 83 107 121 122 133 182 183 198;
-	lset applyto = (1) coding = variable rates = gamma;
+	[substitution model]
+	exclude 7 31 61 83 107 121 122 133 182 183 198; [constant]
 	ctype ordered: 20 23 27 30 36 41 42 44 46 48 59 65 75 78 79 89 99 112 117 134 146 157 159 171 185 191 193 196;
-	lset applyto = (2,3,4) nst = 6 rates = gamma;
+
+	lset applyto = (1) coding = variable rates = gamma; [morphology]
+	lset applyto = (2,3,4) nst = 6 rates = gamma; [GTR+G]
+
 	unlink statefreq = (all) revmat = (all) shape = (all);
 	prset applyto = (all) ratepr = variable;
 
-
-	[3.4 Relaxed clock models]
+	[relaxed clock model]
 	prset clockratepr = lognorm(-7,0.6);
-	[prset clockvarpr = tk02;]
-	[prset tk02varpr = exp(1);]
-	prset clockvarpr = igr;
-	prset igrvarpr = exp(10);
+	prset clockvarpr = igr [tk02];
+	prset igrvarpr = exp(10) [tk02varpr = exp(1)];
+
 	outgroup Raphidioptera;
 	taxset fossils = Asioxyela Nigrimonticola Xyelotoma Undatoma Dahuratoma Cleistogaster Ghilarella Mesorussus Prosyntexis Pseudoxyelocerus;
-	constraint root = 1-.;
+
+	[constraints]
 	constraint HymenFossil = 2-.;
 	constraint Hymenoptera = 2-10;
 	constraint Holometabola = 1-10;
 	constraint Tenthredinidae = 3-5;
 	constraint CepSirOruApo = 7-10;
 
-[
- 	[3.5 Total-evidence dating]
+[	[Total-evidence Dating]
 	calibrate Asioxyela = unif(228,242) Nigrimonticola = unif(152,163) Xyelotoma = unif(152,163) Undatoma = unif(145,152) Dahuratoma = fixed(134) Cleistogaster = unif(168,191) Ghilarella = unif(113,125) Mesorussus = unif(94,100) Prosyntexis = unif(80,86) Pseudoxyelocerus = fixed(182);
 	prset nodeagepr = calibrated;
-	prset brlenspr = clock:fossilization;
-	prset samplestrat = diversity;
+
+	prset brlenspr = clock:fossilization [clock:uniform];
+	prset samplestrat = diversity [random];
 	prset sampleprob = 0.0001;
 	prset speciationpr = exp(10);
 	prset extinctionpr = beta(1,1);
 	prset fossilizationpr = beta(1,1);
 	prset treeagepr = offsetexp(300,390);
 	prset topologypr = constraint(HymenFossil);
+
 	mcmcp nrun = 2 nchain = 4 ngen = 500000 samplefr = 100;
 	mcmcp filename = hym.te printfr = 1000 diagnfr = 5000;
+
 	mcmc;
 	sump;
 	sumt;
+
 	delete fossils;
 	sumt output = hym.rf;
 ]
 
-[
- 	[3.6 Node dating]
+[	[Node dating]
 	delete fossils;
-	exclude 24 130 168;
-	[calibrate root = offsetexp(300,390) Tenthredinidae = offsetgamma(100,150,25) CepSirOruApo = truncatednormal(140,175,25);]
+	exclude 24 130 168; [constant]
+
 	calibrate Tenthredinidae = offsetgamma(100,150,25) CepSirOruApo = truncatednormal(140,175,25);
 	prset nodeagepr = calibrated;
-	[prset brlenspr = clock:fossilization;]
-	[prset fossilizationpr = fixed(0);]
-	[prset sampleprob = 0.0001;]
-	[prset samplestrat = diversity;]
-    prset brlenspr = clock:birthdeath;
-    prset samplestrat = diversity;
-    prset sampleprob = 0.0001;
-    prset speciationpr = exp(10);
-    prset extinctionpr = beta(1,1);
-    prset treeagepr = offsetexp(300,390);
+	
+	prset brlenspr = clock:birthdeath [clock:uniform];
+	prset samplestrat = diversity [random];
+	prset sampleprob = 0.0001;
+	prset speciationpr = exp(10);
+	prset extinctionpr = beta(1,1);
+	prset treeagepr = offsetexp(300,390);
 	prset topologypr = constraint(Hymenoptera,Tenthredinidae,CepSirOruApo);
+
 	mcmcp nrun = 2 nchain = 4 ngen = 500000 samplefr = 100;
 	mcmcp filename = hym.nd printfr = 1000 diagnfr = 5000;
 	mcmcp startp = reset startt = random;
+
 	mcmc;
 	sump;
 	sumt;
 ]
 
-[
- 	[3.7 Non-clock analysis]
+[	[Non-clock, clockrate&calibrate ignored]
 	delete fossils;
+
 	prset brlenspr = uncons:gammadir(1,1,1,1);
 	prset topologypr = uniform;
+	
 	mcmcp nrun = 2 nchain = 4 ngen = 500000 samplefr = 100;
 	mcmcp filename = hym.un printfr = 1000 diagnfr = 5000;
+	
 	mcmc;
 	sump;
 	sumt;
 ]
 
 End;
-]
+
