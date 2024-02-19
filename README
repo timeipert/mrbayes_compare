@@ -1,3 +1,7 @@
+.. wanted to understand the difference between MrBayes (First commit) and the MrBayes_volpiano (Second commit) fork. Unfortunately, I did not use the right MrBayes version, but it works anyway.
+
+
+
 # mrbayes_volpiano
 
 This is a fork of MrBayes v3.2.7a, a programme for estimation of phylogenetic trees using Bayesian inference. This fork differs from the original in that the standard character coding is no longer intended for morphology in biological datasets but rather for the encoding of plainchant melodies in the volpiano format. The original README is provided below as well as the license and modified source code. A note has been added to the greeting text to make it clear that this is a fork only intended to be used for analysing plainchant melodies in volpiano format rather than the original biological sequence data.
